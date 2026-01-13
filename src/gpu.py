@@ -4,14 +4,12 @@ import pycuda.driver as cuda
 import pycuda.autoinit
 from kernels import get_gradient_function
 
-# Otteniamo la funzione una volta sola
 _edge_func = get_gradient_function()
 
 class EdgeDetectorGPU:
-    """Versione ottimizzata per la produzione (senza timer intermedi)"""
+    """Versione senza timer"""
     def detect(self, input_img: np.ndarray, kernel: np.ndarray) -> np.ndarray:
         H, W, C = input_img.shape
-        # Preparazione dati
         input_img = np.ascontiguousarray(input_img.astype(np.uint8))
         
         d_input = cuda.mem_alloc(input_img.nbytes)
@@ -32,7 +30,7 @@ class EdgeDetectorGPU:
         return output_img
 
 class EdgeDetectorGPU_Instrumented:
-    """Versione per esperimenti (restituisce metriche di tempo)"""
+    """Versione per i grafici """
     def detect_with_metrics(self, input_img: np.ndarray, kernel: np.ndarray):
         """ Restituisce: (immagine, tempo_trasferimento, tempo_calcolo) """
         H, W, C = input_img.shape

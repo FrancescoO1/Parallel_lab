@@ -1,10 +1,6 @@
 import pycuda.autoinit
 from pycuda.compiler import SourceModule
 
-# ==============================================================================
-# DEFINIZIONE DEL KERNEL CUDA
-# ==============================================================================
-
 _KERNEL_CODE_RGB = """
 __global__ void morphological_gradient_rgb_kernel(unsigned char *input, unsigned char *output, 
                                                   int W, int H, int kH, int kW)
@@ -46,9 +42,7 @@ __global__ void morphological_gradient_rgb_kernel(unsigned char *input, unsigned
 }
 """
 
-# Compilazione del modulo (eseguita una volta sola all'importazione di questo file)
 _mod = SourceModule(_KERNEL_CODE_RGB)
 
 def get_gradient_function():
-    """Restituisce la funzione CUDA compilata pronta per l'uso."""
     return _mod.get_function("morphological_gradient_rgb_kernel")

@@ -4,33 +4,23 @@ import statistics
 import numpy as np
 import matplotlib.pyplot as plt
 from PIL import Image
-
-# --- NUOVI IMPORT MODULARI ---
 from cpu import EdgeDetectorCPU
 from gpu import EdgeDetectorGPU, EdgeDetectorGPU_Instrumented
 
-# ==============================================================================
-# CONFIGURAZIONE
-# ==============================================================================
 IMAGE_PATH = "/media/francesco/DATA/dev/vsCode/Lab_Parallel/IMMAGINE/aquila.jpg"
 OUTPUT_DIR = "final_output"
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-# Stile grafici
 plt.style.use('fast') 
 COLORS = ['#4c72b0', '#55a868', '#c44e52', '#8172b2', '#ccb974']
 
-# ==============================================================================
-# FASE 1: BENCHMARK TESTUALE (CPU vs GPU)
-# ==============================================================================
-
+# BENCHMARK (CPU vs GPU)
 def run_text_benchmark(pil_img):
     print("\n" + "="*50)
     print("  FASE 1: BENCHMARK CLASSICO (Speedup Check)")
     print("="*50)
     
-    # img_bench = pil_img.resize((1024, 576)) # Decommenta per test veloci su CPU
-    img_bench = pil_img # Full Resolution
+    img_bench = pil_img 
     
     input_arr = np.array(img_bench, dtype=np.uint8)
     H, W, C = input_arr.shape
@@ -51,13 +41,12 @@ def run_text_benchmark(pil_img):
     # --- Run GPU ---
     print("Avvio Parallelo (GPU)... [20 run]")
     times_gpu = []
-    gpu.detect(input_arr, kernel) # Warm-up
+    gpu.detect(input_arr, kernel) 
     for _ in range(20):
         t0 = time.perf_counter()
         res_gpu = gpu.detect(input_arr, kernel)
         times_gpu.append(time.perf_counter() - t0)
     
-    # Usiamo il tempo MEDIO (Average) delle 20 esecuzioni
     mean_gpu_time = statistics.mean(times_gpu)
     
     # --- Risultati ---
@@ -70,15 +59,12 @@ def run_text_benchmark(pil_img):
     print(f"  SPEEDUP:        {speedup:.2f} X")
     print(f"  EFFICIENZA:     {throughput:.2f} MPixel/s")
     
-    # Salvataggio Output Immagine
     out_path = os.path.join(OUTPUT_DIR, "output_benchmark_result.jpg")
     Image.fromarray(res_gpu).save(out_path)
     print(f"  Immagine salvata in: {out_path}")
 
-# ==============================================================================
-# FASE 2: ESPERIMENTI SCIENTIFICI (Grafici)
-# ==============================================================================
 
+# GRAFICI
 def run_scientific_experiments(pil_original):
     print("\n" + "="*50)
     print("  FASE 2: GENERAZIONE GRAFICI SCIENTIFICI")
@@ -87,10 +73,10 @@ def run_scientific_experiments(pil_original):
     detector = EdgeDetectorGPU_Instrumented()
     kernel_3x3 = np.ones((3, 3), dtype=np.uint8)
     
-    # --- ESPERIMENTO 1: Collo di Bottiglia (Pie Chart) ---
+    # --- GRAFICO 1: Pie chart ---
     print("Generazione grafico 1 (Bottleneck)...")
     img_full = np.array(pil_original, dtype=np.uint8)
-    detector.detect_with_metrics(img_full, kernel_3x3) # Warmup
+    detector.detect_with_metrics(img_full, kernel_3x3) 
     _, t_trans, t_comp = detector.detect_with_metrics(img_full, kernel_3x3)
     
     plt.figure(figsize=(6, 6))
@@ -100,7 +86,7 @@ def run_scientific_experiments(pil_original):
     plt.savefig(os.path.join(OUTPUT_DIR, "Exp1_Pie_Bottleneck.png"))
     plt.close()
     
-    # --- ESPERIMENTO 2: Scalabilità Risoluzione ---
+    # --- GRAFICO 2: Scalabilità Risoluzione ---
     print("Generazione grafico 2 (Scalabilità)...")
     resolutions = [(640, 360), (1280, 720), (1920, 1080), (2560, 1440), (3840, 2160)]
     res_labels = ["360p", "720p", "1080p", "2K", "4K"]
@@ -122,7 +108,7 @@ def run_scientific_experiments(pil_original):
     plt.savefig(os.path.join(OUTPUT_DIR, "Exp2_Line_Scalability.png"))
     plt.close()
     
-    # --- ESPERIMENTO 3: FPS Real-time ---
+    # --- GRAFICO 3: FPS Real-time ---
     print("Generazione grafico 3 (FPS)...")
     plt.figure(figsize=(10, 5))
     bars = plt.bar(res_labels, fps_val, color=COLORS[1], alpha=0.8)
@@ -130,14 +116,14 @@ def run_scientific_experiments(pil_original):
     plt.ylabel('FPS')
     plt.title('Frame Per Secondo (Real-Time)')
     plt.legend()
-    # Aggiungi etichette
+    
     for bar in bars:
         plt.text(bar.get_x() + bar.get_width()/2, bar.get_height(), 
                  f"{int(bar.get_height())}", ha='center', va='bottom')
     plt.savefig(os.path.join(OUTPUT_DIR, "Exp3_Bar_FPS.png"))
     plt.close()
 
-    # --- ESPERIMENTO 4: Complessità Kernel ---
+    # --- GRAFICO 4: Complessità Kernel ---
     print("Generazione grafico 4 (Kernel Size)...")
     kernel_sizes = [3, 5, 9, 15, 21]
     times_k = []
@@ -147,7 +133,6 @@ def run_scientific_experiments(pil_original):
         ks = np.ones((k, k), dtype=np.uint8)
         res_img, _, t_c = detector.detect_with_metrics(img_1080, ks)
         times_k.append(t_c * 1000)
-        # Salva output visivo per slide
         Image.fromarray(res_img).save(os.path.join(OUTPUT_DIR, f"Visual_Kernel_{k}x{k}.jpg"))
         
     plt.figure(figsize=(10, 5))
@@ -161,9 +146,6 @@ def run_scientific_experiments(pil_original):
 
     print(f"\n Tutto completato. Controlla la cartella: {OUTPUT_DIR}/")
 
-# ==============================================================================
-# ENTRY POINT
-# ==============================================================================
 
 if __name__ == "__main__":
     if not os.path.exists(IMAGE_PATH):
@@ -172,6 +154,5 @@ if __name__ == "__main__":
     else:
         pil_img = Image.open(IMAGE_PATH).convert('RGB')
     
-    # Eseguiamo tutto in sequenza
     run_text_benchmark(pil_img)
     run_scientific_experiments(pil_img)
